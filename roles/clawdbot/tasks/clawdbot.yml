@@ -7,49 +7,40 @@
     group: "{{ clawdbot_user }}"
     mode: "{{ item.mode }}"
   loop:
-    - { path: "{{ clawdbot_install_dir }}", mode: '0755' }
     - { path: "{{ clawdbot_config_dir }}", mode: '0755' }
     - { path: "{{ clawdbot_config_dir }}/sessions", mode: '0755' }
     - { path: "{{ clawdbot_config_dir }}/credentials", mode: '0700' }
 
-- name: Generate Clawdbot configuration files
+- name: Install Clawdbot globally as clawdbot user
+  ansible.builtin.shell:
+    cmd: pnpm add -g clawdbot@latest
+    executable: /bin/bash
+  become: true
+  become_user: "{{ clawdbot_user }}"
+  environment:
+    PNPM_HOME: "{{ clawdbot_home }}/.local/share/pnpm"
+    PATH: "{{ clawdbot_home }}/.local/share/pnpm:{{ ansible_env.PATH }}"
+
+- name: Create pnpm bin directory in user PATH
+  ansible.builtin.file:
+    path: "{{ clawdbot_home }}/.local/share/pnpm"
+    state: directory
+    owner: "{{ clawdbot_user }}"
+    group: "{{ clawdbot_user }}"
+    mode: '0755'
+
+- name: Generate Clawdbot config template
   ansible.builtin.template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
+    src: clawdbot-config.yml.j2
+    dest: "{{ clawdbot_config_dir }}/config.yml"
     owner: "{{ clawdbot_user }}"
     group: "{{ clawdbot_user }}"
     mode: '0644'
-    force: "{{ item.force | default(true) }}"
-  loop:
-    - { src: 'Dockerfile.j2', dest: "{{ clawdbot_install_dir }}/Dockerfile" }
-    - { src: 'docker-compose.yml.j2', dest: "{{ clawdbot_install_dir }}/docker-compose.yml" }
-    - { src: 'clawdbot-config.yml.j2', dest: "{{ clawdbot_config_dir }}/config.yml", force: false }
+    force: false
 
-- name: Build Clawdbot Docker image
-  community.docker.docker_image:
-    name: "{{ clawdbot_docker_image }}"
-    tag: "{{ clawdbot_docker_tag }}"
-    source: build
-    build:
-      path: "{{ clawdbot_install_dir }}"
-    state: present
-
-- name: Start Clawdbot container with docker compose
-  community.docker.docker_compose_v2:
-    project_src: "{{ clawdbot_install_dir }}"
-    state: present
-
-- name: Wait for Clawdbot container to be healthy
-  community.docker.docker_container_info:
-    name: "{{ clawdbot_container_name }}"
-  register: container_info
-  until: container_info.container.State.Status == 'running'
-  retries: 10
-  delay: 3
-
-- name: Generate systemd service file
+- name: Generate systemd service file for Clawdbot
   ansible.builtin.template:
-    src: clawdbot.service.j2
+    src: clawdbot-host.service.j2
     dest: /etc/systemd/system/clawdbot.service
     owner: root
     group: root
@@ -59,7 +50,8 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: Enable Clawdbot service
+- name: Enable and start Clawdbot service
   ansible.builtin.systemd:
     name: clawdbot
     enabled: true
+    state: started

@@ -1,0 +1,27 @@
+[Unit]
+Description=Clawdbot WhatsApp Gateway
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User={{ clawdbot_user }}
+Group={{ clawdbot_user }}
+WorkingDirectory={{ clawdbot_home }}
+Environment="PATH={{ clawdbot_home }}/.local/share/pnpm:/usr/local/bin:/usr/bin:/bin"
+Environment="PNPM_HOME={{ clawdbot_home }}/.local/share/pnpm"
+ExecStart={{ clawdbot_home }}/.local/share/pnpm/clawdbot gateway
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=clawdbot
+
+[Install]
+WantedBy=multi-user.target

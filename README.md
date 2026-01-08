@@ -26,9 +26,9 @@ curl -fsSL https://raw.githubusercontent.com/pasogott/clawdbot-ansible/main/inst
 
 - Tailscale (mesh VPN)
 - UFW firewall (SSH + Tailscale ports only)
-- Docker CE + Compose V2
+- Docker CE + Compose V2 (for sandboxes)
 - Node.js 22.x + pnpm
-- Clawdbot in hardened container
+- Clawdbot on host (not containerized)
 - Systemd service (auto-start)
 
 ## Post-Install
@@ -40,19 +40,22 @@ sudo tailscale up
 # 2. Configure Clawdbot
 sudo nano /home/clawdbot/.clawdbot/config.yml
 
-# 3. Login
-sudo docker exec -it clawdbot clawdbot login
+# 3. Login as clawdbot user
+sudo su - clawdbot
+clawdbot login
 
 # 4. Check status
 sudo systemctl status clawdbot
+sudo journalctl -u clawdbot -f
 ```
 
 ## Security
 
 - **Public ports**: SSH (22), Tailscale (41641/udp) only
-- **Clawdbot port 3000**: Accessible via localhost or Tailscale only
-- **Container isolation**: New containers can't expose ports externally
-- **Non-root**: All processes run as unprivileged users
+- **Docker available**: For Clawdbot sandboxes (isolated execution)
+- **Docker isolation**: Containers can't expose ports externally (DOCKER-USER chain)
+- **Non-root**: Clawdbot runs as unprivileged user
+- **Systemd hardening**: NoNewPrivileges, PrivateTmp
 
 Verify: `nmap -p- YOUR_SERVER_IP` should show only port 22 open.
 
