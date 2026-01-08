@@ -52,8 +52,8 @@ echo ""
 echo -e "${YELLOW}Switching to clawdbot user for setup...${NC}"
 echo ""
 
-# Create a profile script that shows the welcome message
-cat > /tmp/.clawdbot-welcome.sh << 'WELCOME_EOF'
+# Create a .bashrc snippet that shows the welcome message once
+cat > /tmp/.clawdbot-motd << 'MOTD_EOF'
 echo "============================================"
 echo "📋 Clawdbot Setup - Next Steps"
 echo "============================================"
@@ -85,10 +85,10 @@ echo "============================================"
 echo ""
 echo "Type 'exit' to return to previous user"
 echo ""
-rm -f /tmp/.clawdbot-welcome.sh
-WELCOME_EOF
+# Remove this file so it only shows once
+rm -f /tmp/.clawdbot-motd
+MOTD_EOF
 
-chmod +x /tmp/.clawdbot-welcome.sh
-
-# Switch to clawdbot user with login shell and run welcome message
-exec sudo -i -u clawdbot bash -c '/tmp/.clawdbot-welcome.sh; exec bash --login'
+# Switch to clawdbot user with login shell
+# Use bash --rcfile to source the MOTD before starting interactive shell
+exec sudo -i -u clawdbot bash --rcfile <(cat ~/.bashrc 2>/dev/null; cat /tmp/.clawdbot-motd 2>/dev/null)
