@@ -52,7 +52,8 @@ echo ""
 echo -e "${YELLOW}Switching to clawdbot user for setup...${NC}"
 echo ""
 
-sudo -u clawdbot bash --login << 'SETUP_EOF'
+# Create a profile script that shows the welcome message
+cat > /tmp/.clawdbot-welcome.sh << 'WELCOME_EOF'
 echo "============================================"
 echo "📋 Clawdbot Setup - Next Steps"
 echo "============================================"
@@ -84,7 +85,10 @@ echo "============================================"
 echo ""
 echo "Type 'exit' to return to previous user"
 echo ""
+rm -f /tmp/.clawdbot-welcome.sh
+WELCOME_EOF
 
-# Start interactive bash
-exec /bin/bash --login
-SETUP_EOF
+chmod +x /tmp/.clawdbot-welcome.sh
+
+# Switch to clawdbot user with login shell and run welcome message
+exec sudo -i -u clawdbot bash -c '/tmp/.clawdbot-welcome.sh; exec bash --login'
