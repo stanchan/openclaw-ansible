@@ -51,6 +51,7 @@ echo ""
 # Switch to clawdbot user for setup
 echo -e "${YELLOW}Switching to clawdbot user for setup...${NC}"
 echo ""
+echo "DEBUG: About to create init script..."
 
 # Create init script that will be sourced on login
 cat > /home/clawdbot/.clawdbot-init << 'INIT_EOF'
@@ -92,13 +93,20 @@ rm -f ~/.clawdbot-init
 INIT_EOF
 
 chown clawdbot:clawdbot /home/clawdbot/.clawdbot-init
+echo "DEBUG: Init script created and chowned"
 
 # Add one-time sourcing to .bashrc if not already there
 grep -q '.clawdbot-init' /home/clawdbot/.bashrc 2>/dev/null || {
     echo '' >> /home/clawdbot/.bashrc
     echo '# One-time setup message' >> /home/clawdbot/.bashrc
     echo '[ -f ~/.clawdbot-init ] && source ~/.clawdbot-init' >> /home/clawdbot/.bashrc
+    echo "DEBUG: Added to .bashrc"
 }
+
+echo "DEBUG: About to exec sudo -i -u clawdbot"
+echo "DEBUG: Current user: $(whoami)"
+echo "DEBUG: Executing in 2 seconds..."
+sleep 2
 
 # Switch to clawdbot user with login shell
 exec sudo -i -u clawdbot
