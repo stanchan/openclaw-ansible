@@ -50,11 +50,11 @@
 
 # Include appropriate installation method based on mode
 - name: Include release installation (pnpm install -g)
-  ansible.builtin.include_tasks: clawdbot-release.yml
+  ansible.builtin.include_tasks: openclaw-release.yml
   when: clawdbot_install_mode == "release"
 
 - name: Include development installation (git clone + build + link)
-  ansible.builtin.include_tasks: clawdbot-development.yml
+  ansible.builtin.include_tasks: openclaw-development.yml
   when: clawdbot_install_mode == "development"
 
 - name: Configure .bashrc for clawdbot user (base config)
